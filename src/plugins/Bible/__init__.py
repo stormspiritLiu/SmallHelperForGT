@@ -1,11 +1,21 @@
+import re, datetime
+
 from nonebot.plugin import on_message
 from nonebot.adapters.onebot.v11 import Bot, Event
 from nonebot.adapters.onebot.v11.message import Message
 
+last_time = None
+
 async def match(bot: Bot, event: Event) -> bool:
+    global last_time
+    if last_time is not None and (datetime.datetime.now() - last_time).total_seconds() < 600:
+        return False
+
+    last_time = datetime.datetime.now()
     friends = await bot.get_friend_list()
     condition1 = "311842761" in event.get_session_id()  or event.get_user_id() in str(friends)
-    condition2 = "暗炮" in event.get_plaintext() or "圣经" in event.get_plaintext()
+    condition2 = re.search(r'[光暗]+.*(强|厉害|牛逼)+', event.get_plaintext(), re.M) is not None \
+                 or re.search(r'^首先.*忘了', event.get_plaintext(), re.M) is not None
     return condition1 and condition2
 
 bible = on_message(match, priority=50)
